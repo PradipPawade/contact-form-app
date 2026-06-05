@@ -153,11 +153,12 @@
               <a *ngIf="s.attachmentUrl"
                  [href]="s.attachmentUrl"
                  target="_blank"
-                 class="attachment-link"
-                 [title]="s.attachmentName ?? 'Download'">
-                📎 {{ s.attachmentName ?? 'File' }}
+                 class="download-btn"
+                 [title]="s.attachmentName ?? 'Download file'">
+                ⬇ Download
+                <span class="file-label">{{ s.attachmentName ?? 'file' }}</span>
               </a>
-              <span *ngIf="!s.attachmentUrl" class="no-attachment">—</span>
+              <span *ngIf="!s.attachmentUrl" class="no-attachment">No file</span>
             </td>
             <td class="td-date">{{ s.submittedAt | date:'dd MMM yyyy, HH:mm' }}</td>
           </tr>

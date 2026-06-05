@@ -288,20 +288,42 @@ tbody tr:last-child td { border-bottom: none; }
 .td-subject { font-weight: 500; }
 .td-message    { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .td-date       { white-space: nowrap; font-size: 0.8rem; color: #9ca3af; }
-.td-attachment { max-width: 140px; }
+.td-attachment { min-width: 130px; }
 
-.attachment-link {
-  color: #667eea;
+.download-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  transition: opacity 0.2s, transform 0.1s;
   white-space: nowrap;
+}
+.download-btn:hover  { opacity: 0.85; transform: scale(1.03); }
+.download-btn:active { transform: scale(0.97); }
+
+.file-label {
+  font-size: 0.68rem;
+  font-weight: 400;
+  opacity: 0.85;
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   display: block;
-  max-width: 130px;
 }
-.attachment-link:hover { text-decoration: underline; }
-.no-attachment { color: #d1d5db; }
+
+.no-attachment {
+  color: #d1d5db;
+  font-size: 0.8rem;
+  font-style: italic;
+}
 
 /* ── File Upload Drop Zone ───────────────────────────────────────────────── */
 .file-drop {
