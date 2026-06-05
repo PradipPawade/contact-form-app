@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://contactformapi.azurewebsites.net/api'
+  apiBaseUrl: 'https://contactformapi-enbtcpbaepb3hybt.centralindia-01.azurewebsites.net/api'
 };
