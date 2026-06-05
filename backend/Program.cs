@@ -48,9 +48,8 @@ using (var scope = app.Services.CreateScope())
     {
         var db  = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var log = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        db.Database.EnsureDeleted();   // ← drop old schema
-        db.Database.EnsureCreated();   // ← recreate with new columns
-        log.LogInformation("Database schema recreated successfully.");
+        db.Database.EnsureCreated();   // ← create if not exists (preserves data)
+        log.LogInformation("Database ready.");
     }
     catch (Exception ex)
     {
