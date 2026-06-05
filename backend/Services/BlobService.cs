@@ -5,10 +5,10 @@ namespace ContactFormApi.Services;
 
 public class BlobService
 {
-    private readonly BlobContainerClient _container;
+    private readonly BlobContainerClient? _container;
     private readonly ILogger<BlobService> _logger;
+    private readonly bool _isConfigured;
 
-    // Allowed file types
     private static readonly HashSet<string> AllowedExtensions =
         [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".txt"];
 
@@ -17,33 +17,49 @@ public class BlobService
     public BlobService(IConfiguration config, ILogger<BlobService> logger)
     {
         _logger = logger;
-        var connStr = config["AzureStorage:ConnectionString"]
-            ?? throw new InvalidOperationException("AzureStorage:ConnectionString is not configured.");
+        var connStr = config["AzureStorage:ConnectionString"];
 
-        var serviceClient = new BlobServiceClient(connStr);
-        _container = serviceClient.GetBlobContainerClient("attachments");
-        _container.CreateIfNotExists(PublicAccessType.Blob);
+        if (string.IsNullOrWhiteSpace(connStr))
+        {
+            _logger.LogWarning("AzureStorage:ConnectionString is not configured. File uploads are disabled.");
+            _isConfigured = false;
+            return;
+        }
+
+        try
+        {
+            var serviceClient = new BlobServiceClient(connStr);
+            _container = serviceClient.GetBlobContainerClient("attachments");
+            _container.CreateIfNotExists(PublicAccessType.Blob);
+            _isConfigured = true;
+            _logger.LogInformation("Blob Storage configured successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to connect to Blob Storage. File uploads are disabled.");
+            _isConfigured = false;
+        }
     }
 
     public async Task<string?> UploadAsync(IFormFile file)
     {
-        // Validate size
+        if (!_isConfigured || _container is null)
+        {
+            _logger.LogWarning("Blob Storage not configured — skipping file upload.");
+            return null;
+        }
+
         if (file.Length > MaxFileSizeBytes)
             throw new InvalidOperationException("File size exceeds the 5 MB limit.");
 
-        // Validate extension
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(ext))
             throw new InvalidOperationException($"File type '{ext}' is not allowed.");
 
-        // Create unique file name to prevent collisions
         var uniqueName = $"{Guid.NewGuid()}{ext}";
         var blobClient = _container.GetBlobClient(uniqueName);
 
-        var blobHttpHeaders = new BlobHttpHeaders
-        {
-            ContentType = file.ContentType
-        };
+        var blobHttpHeaders = new BlobHttpHeaders { ContentType = file.ContentType };
 
         await using var stream = file.OpenReadStream();
         await blobClient.UploadAsync(stream, new BlobUploadOptions
@@ -57,6 +73,7 @@ public class BlobService
 
     public async Task DeleteAsync(string fileUrl)
     {
+        if (!_isConfigured || _container is null) return;
         var uri  = new Uri(fileUrl);
         var name = Path.GetFileName(uri.LocalPath);
         var blob = _container.GetBlobClient(name);
