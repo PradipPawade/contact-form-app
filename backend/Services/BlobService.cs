@@ -26,6 +26,17 @@ public class BlobService
             return;
         }
 
+        // Also check double-underscore format used by Azure App Service
+        if (string.IsNullOrWhiteSpace(connStr))
+            connStr = config["AzureStorage__ConnectionString"];
+
+        if (string.IsNullOrWhiteSpace(connStr))
+        {
+            _logger.LogWarning("AzureStorage connection string not found. File uploads disabled.");
+            _isConfigured = false;
+            return;
+        }
+
         try
         {
             var serviceClient = new BlobServiceClient(connStr);
