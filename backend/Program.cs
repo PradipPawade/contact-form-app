@@ -34,7 +34,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AngularPolicy", policy =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .SetIsOriginAllowedToAllowWildcardSubdomains());
 });
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
