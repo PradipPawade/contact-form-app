@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using ContactFormApi.Models;
+using ContactFormApi.Data;
 
 namespace ContactFormApi.Controllers;
 
@@ -10,16 +12,19 @@ public class ContactController : ControllerBase
 {
     private readonly ILogger<ContactController> _logger;
     private readonly IValidator<ContactFormModel> _validator;
+    private readonly AppDbContext _db;
 
-    public ContactController(ILogger<ContactController> logger, IValidator<ContactFormModel> validator)
+    public ContactController(
+        ILogger<ContactController> logger,
+        IValidator<ContactFormModel> validator,
+        AppDbContext db)
     {
         _logger    = logger;
         _validator = validator;
+        _db        = db;
     }
 
-    /// <summary>
-    /// Submits the contact form.
-    /// </summary>
+    /// <summary>Submit the contact form — saves to database.</summary>
     [HttpPost("submit")]
     [ProducesResponseType(typeof(ContactFormResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -31,30 +36,49 @@ public class ContactController : ControllerBase
             var errors = result.Errors
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-
             return ValidationProblem(new ValidationProblemDetails(errors));
         }
 
-        var referenceId = Guid.NewGuid();
-        _logger.LogInformation(
-            "Contact form submitted — Ref: {ReferenceId}, From: {Email}, Subject: {Subject}",
-            referenceId, form.Email, form.Subject);
+        var submission = new ContactSubmission
+        {
+            FirstName   = form.FirstName,
+            LastName    = form.LastName,
+            Email       = form.Email,
+            Phone       = form.Phone,
+            Subject     = form.Subject,
+            Message     = form.Message,
+            ReferenceId = Guid.NewGuid(),
+            SubmittedAt = DateTime.UtcNow
+        };
 
-        // TODO: persist to DB or send email here
-        await Task.CompletedTask;
+        _db.ContactSubmissions.Add(submission);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Saved submission Ref:{ReferenceId} From:{Email}",
+            submission.ReferenceId, submission.Email);
 
         return Ok(new ContactFormResponse
         {
             Success     = true,
             Message     = "Thank you! Your message has been received. We will get back to you shortly.",
-            ReferenceId = referenceId,
-            SubmittedAt = DateTime.UtcNow
+            ReferenceId = submission.ReferenceId,
+            SubmittedAt = submission.SubmittedAt
         });
     }
 
-    /// <summary>
-    /// Health check endpoint.
-    /// </summary>
+    /// <summary>Get all submissions — newest first.</summary>
+    [HttpGet("list")]
+    [ProducesResponseType(typeof(IEnumerable<ContactSubmission>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> List()
+    {
+        var submissions = await _db.ContactSubmissions
+            .OrderByDescending(x => x.SubmittedAt)
+            .ToListAsync();
+        return Ok(submissions);
+    }
+
+    /// <summary>Health check.</summary>
     [HttpGet("health")]
     public IActionResult Health() => Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
 }

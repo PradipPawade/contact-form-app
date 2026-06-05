@@ -2,10 +2,12 @@
 .page-wrapper {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 4rem;
+  gap: 0;
 }
 
 .card {
@@ -203,4 +205,92 @@ textarea { resize: vertical; }
   border-radius: 4px;
   font-size: 0.85rem;
   color: #374151;
+}
+
+/* ── Submissions Card ────────────────────────────────────────────────────── */
+.submissions-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 960px;
+  margin-top: 2rem;
+  overflow: hidden;
+}
+
+.submissions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.submissions-header h2 { margin: 0; font-size: 1.1rem; }
+
+.btn-refresh {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+.btn-refresh:hover { background: rgba(255,255,255,0.35); }
+
+.list-state {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.list-state.empty { font-style: italic; }
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.table-wrapper { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+thead { background: #f9fafb; }
+
+th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
+  vertical-align: top;
+}
+
+tbody tr:hover { background: #f9fafb; }
+tbody tr:last-child td { border-bottom: none; }
+
+.td-id      { width: 40px; font-weight: 600; color: #667eea; }
+.td-name    { white-space: nowrap; font-weight: 500; color: #111827; }
+.td-email   { color: #667eea; }
+.td-subject { font-weight: 500; }
+.td-message { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-date    { white-space: nowrap; font-size: 0.8rem; color: #9ca3af; }
+
+/* Dark spinner variant */
+.spinner.dark {
+  border-color: rgba(0,0,0,0.15);
+  border-top-color: #667eea;
 }

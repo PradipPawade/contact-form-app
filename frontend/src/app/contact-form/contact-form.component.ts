@@ -1,9 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ContactService } from '../services/contact.service';
-import { ContactFormResponse } from '../models/contact-form.model';
+import { ContactFormResponse, ContactSubmission } from '../models/contact-form.model';
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -14,12 +14,14 @@ type FormState = 'idle' | 'submitting' | 'success' | 'error';
   templateUrl: './contact-form.component.html',
   styleUrls: ['./contact-form.component.css']
 })
-export class ContactFormComponent {
+export class ContactFormComponent implements OnInit {
   form: FormGroup;
-  state = signal<FormState>('idle');
+  state         = signal<FormState>('idle');
   serverMessage = signal<string>('');
   referenceId   = signal<string>('');
   serverErrors  = signal<Record<string, string[]>>({});
+  submissions   = signal<ContactSubmission[]>([]);
+  loadingList   = signal<boolean>(false);
 
   constructor(private fb: FormBuilder, private contactService: ContactService) {
     this.form = this.fb.group({
@@ -32,16 +34,28 @@ export class ContactFormComponent {
     });
   }
 
+  ngOnInit(): void {
+    this.loadSubmissions();
+  }
+
+  loadSubmissions(): void {
+    this.loadingList.set(true);
+    this.contactService.getAll().subscribe({
+      next: (data) => { this.submissions.set(data); this.loadingList.set(false); },
+      error: ()     => { this.loadingList.set(false); }
+    });
+  }
+
   get f() { return this.form.controls; }
 
   fieldError(name: string): string | null {
     const ctrl = this.form.get(name);
     if (!ctrl || (!ctrl.dirty && !ctrl.touched)) return null;
-    if (ctrl.hasError('required'))    return 'This field is required.';
-    if (ctrl.hasError('email'))       return 'Enter a valid email address.';
-    if (ctrl.hasError('maxlength'))   return `Max ${ctrl.errors!['maxlength'].requiredLength} characters.`;
-    if (ctrl.hasError('minlength'))   return `Min ${ctrl.errors!['minlength'].requiredLength} characters.`;
-    if (ctrl.hasError('pattern'))     return 'Invalid format.';
+    if (ctrl.hasError('required'))  return 'This field is required.';
+    if (ctrl.hasError('email'))     return 'Enter a valid email address.';
+    if (ctrl.hasError('maxlength')) return `Max ${ctrl.errors!['maxlength'].requiredLength} characters.`;
+    if (ctrl.hasError('minlength')) return `Min ${ctrl.errors!['minlength'].requiredLength} characters.`;
+    if (ctrl.hasError('pattern'))   return 'Invalid format.';
     const srv = this.serverErrors()[name];
     return srv ? srv[0] : null;
   }
@@ -59,6 +73,7 @@ export class ContactFormComponent {
         this.serverMessage.set(res.message);
         this.referenceId.set(res.referenceId);
         this.form.reset();
+        this.loadSubmissions();
       },
       error: (err: HttpErrorResponse) => {
         if (err.status === 400 && err.error?.errors) {

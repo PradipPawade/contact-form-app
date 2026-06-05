@@ -1,4 +1,6 @@
 <div class="page-wrapper">
+
+  <!-- ── Contact Form Card ── -->
   <div class="card">
 
     <!-- Header -->
@@ -30,78 +32,99 @@
           [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
       <div class="row">
-        <!-- First Name -->
         <div class="field" [class.has-error]="fieldError('firstName')">
           <label for="firstName">First Name <span class="req">*</span></label>
           <input id="firstName" type="text" formControlName="firstName"
                  placeholder="Jane" autocomplete="given-name" />
-          <span class="error-msg" *ngIf="fieldError('firstName')">
-            {{ fieldError('firstName') }}
-          </span>
+          <span class="error-msg" *ngIf="fieldError('firstName')">{{ fieldError('firstName') }}</span>
         </div>
-
-        <!-- Last Name -->
         <div class="field" [class.has-error]="fieldError('lastName')">
           <label for="lastName">Last Name <span class="req">*</span></label>
           <input id="lastName" type="text" formControlName="lastName"
                  placeholder="Smith" autocomplete="family-name" />
-          <span class="error-msg" *ngIf="fieldError('lastName')">
-            {{ fieldError('lastName') }}
-          </span>
+          <span class="error-msg" *ngIf="fieldError('lastName')">{{ fieldError('lastName') }}</span>
         </div>
       </div>
 
       <div class="row">
-        <!-- Email -->
         <div class="field" [class.has-error]="fieldError('email')">
           <label for="email">Email Address <span class="req">*</span></label>
           <input id="email" type="email" formControlName="email"
                  placeholder="jane@example.com" autocomplete="email" />
-          <span class="error-msg" *ngIf="fieldError('email')">
-            {{ fieldError('email') }}
-          </span>
+          <span class="error-msg" *ngIf="fieldError('email')">{{ fieldError('email') }}</span>
         </div>
-
-        <!-- Phone -->
         <div class="field" [class.has-error]="fieldError('phone')">
           <label for="phone">Phone <span class="optional">(optional)</span></label>
           <input id="phone" type="tel" formControlName="phone"
                  placeholder="+1 555 000 0000" autocomplete="tel" />
-          <span class="error-msg" *ngIf="fieldError('phone')">
-            {{ fieldError('phone') }}
-          </span>
+          <span class="error-msg" *ngIf="fieldError('phone')">{{ fieldError('phone') }}</span>
         </div>
       </div>
 
-      <!-- Subject -->
       <div class="field" [class.has-error]="fieldError('subject')">
         <label for="subject">Subject <span class="req">*</span></label>
-        <input id="subject" type="text" formControlName="subject"
-               placeholder="How can we help?" />
-        <span class="error-msg" *ngIf="fieldError('subject')">
-          {{ fieldError('subject') }}
-        </span>
+        <input id="subject" type="text" formControlName="subject" placeholder="How can we help?" />
+        <span class="error-msg" *ngIf="fieldError('subject')">{{ fieldError('subject') }}</span>
       </div>
 
-      <!-- Message -->
       <div class="field" [class.has-error]="fieldError('message')">
         <label for="message">Message <span class="req">*</span></label>
         <textarea id="message" formControlName="message" rows="5"
                   placeholder="Write your message here (min 10 characters)…"></textarea>
-        <div class="char-count">
-          {{ form.get('message')?.value?.length ?? 0 }} / 2000
-        </div>
-        <span class="error-msg" *ngIf="fieldError('message')">
-          {{ fieldError('message') }}
-        </span>
+        <div class="char-count">{{ form.get('message')?.value?.length ?? 0 }} / 2000</div>
+        <span class="error-msg" *ngIf="fieldError('message')">{{ fieldError('message') }}</span>
       </div>
 
-      <button type="submit" class="btn btn-primary"
-              [disabled]="state() === 'submitting'">
+      <button type="submit" class="btn btn-primary" [disabled]="state() === 'submitting'">
         <span *ngIf="state() === 'submitting'" class="spinner"></span>
         {{ state() === 'submitting' ? 'Sending…' : 'Send Message' }}
       </button>
     </form>
 
   </div>
+
+  <!-- ── Submissions List ── -->
+  <div class="submissions-card">
+    <div class="submissions-header">
+      <h2>📋 All Submissions</h2>
+      <button class="btn-refresh" (click)="loadSubmissions()" title="Refresh">↻ Refresh</button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loadingList()" class="list-state">
+      <span class="spinner dark"></span> Loading submissions…
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="!loadingList() && submissions().length === 0" class="list-state empty">
+      No submissions yet. Be the first to send a message!
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!loadingList() && submissions().length > 0" class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Subject</th>
+            <th>Message</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of submissions(); let i = index">
+            <td class="td-id">{{ i + 1 }}</td>
+            <td class="td-name">{{ s.firstName }} {{ s.lastName }}</td>
+            <td class="td-email">{{ s.email }}</td>
+            <td class="td-subject">{{ s.subject }}</td>
+            <td class="td-message">{{ s.message }}</td>
+            <td class="td-date">{{ s.submittedAt | date:'dd MMM yyyy, HH:mm' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>

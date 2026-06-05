@@ -13,3 +13,15 @@ export interface ContactFormResponse {
   referenceId: string;
   submittedAt: string;
 }
+
+export interface ContactSubmission {
+  id:          number;
+  firstName:   string;
+  lastName:    string;
+  email:       string;
+  phone:       string;
+  subject:     string;
+  message:     string;
+  referenceId: string;
+  submittedAt: string;
+}

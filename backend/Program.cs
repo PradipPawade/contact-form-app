@@ -1,6 +1,8 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using ContactFormApi.Models;
 using ContactFormApi.Validators;
+using ContactFormApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,11 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddScoped<IValidator<ContactFormModel>, ContactFormValidator>();
 
-// Allow Angular dev server and production origin
+// ── Database ──────────────────────────────────────────────────────────────────
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration
     .GetSection("AllowedOrigins")
     .Get<string[]>() ?? ["http://localhost:4200"];
@@ -29,6 +35,13 @@ builder.Services.AddCors(options =>
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+// Auto-create database table on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
 
 if (app.Environment.IsDevelopment())
 {
