@@ -41,18 +41,21 @@ builder.Services.AddCors(options =>
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// Auto-create / migrate database table on startup (safe)
+// Drop and recreate database to apply new schema (AttachmentUrl, AttachmentName columns)
 using (var scope = app.Services.CreateScope())
 {
     try
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.EnsureCreated();
+        var db  = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var log = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        db.Database.EnsureDeleted();   // ← drop old schema
+        db.Database.EnsureCreated();   // ← recreate with new columns
+        log.LogInformation("Database schema recreated successfully.");
     }
     catch (Exception ex)
     {
         var log = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        log.LogError(ex, "Database initialization failed — app will continue without DB.");
+        log.LogError(ex, "Database initialization failed — app will continue.");
     }
 }
 
