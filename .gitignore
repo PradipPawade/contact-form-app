@@ -1,0 +1,16 @@
+# .NET
+backend/bin/
+backend/obj/
+backend/publish/
+backend/publish.zip
+*.user
+
+# Angular
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+frontend/frontend.zip
+
+# General
+.DS_Store
+*.log

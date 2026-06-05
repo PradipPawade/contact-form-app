@@ -1,0 +1,107 @@
+<div class="page-wrapper">
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="logo-ring">✉</div>
+      <h1>Contact Us</h1>
+      <p>Fill in the form below and we'll get back to you within 24 hours.</p>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="state() === 'success'" class="feedback success">
+      <span class="icon">✔</span>
+      <h2>Message Sent!</h2>
+      <p>{{ serverMessage() }}</p>
+      <p class="ref">Reference ID: <code>{{ referenceId() }}</code></p>
+      <button class="btn btn-secondary" (click)="reset()">Send Another</button>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="state() === 'error'" class="feedback error">
+      <span class="icon">✖</span>
+      <h2>Something Went Wrong</h2>
+      <p>{{ serverMessage() }}</p>
+      <button class="btn btn-secondary" (click)="reset()">Try Again</button>
+    </div>
+
+    <!-- Form -->
+    <form *ngIf="state() === 'idle' || state() === 'submitting'"
+          [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+      <div class="row">
+        <!-- First Name -->
+        <div class="field" [class.has-error]="fieldError('firstName')">
+          <label for="firstName">First Name <span class="req">*</span></label>
+          <input id="firstName" type="text" formControlName="firstName"
+                 placeholder="Jane" autocomplete="given-name" />
+          <span class="error-msg" *ngIf="fieldError('firstName')">
+            {{ fieldError('firstName') }}
+          </span>
+        </div>
+
+        <!-- Last Name -->
+        <div class="field" [class.has-error]="fieldError('lastName')">
+          <label for="lastName">Last Name <span class="req">*</span></label>
+          <input id="lastName" type="text" formControlName="lastName"
+                 placeholder="Smith" autocomplete="family-name" />
+          <span class="error-msg" *ngIf="fieldError('lastName')">
+            {{ fieldError('lastName') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Email -->
+        <div class="field" [class.has-error]="fieldError('email')">
+          <label for="email">Email Address <span class="req">*</span></label>
+          <input id="email" type="email" formControlName="email"
+                 placeholder="jane@example.com" autocomplete="email" />
+          <span class="error-msg" *ngIf="fieldError('email')">
+            {{ fieldError('email') }}
+          </span>
+        </div>
+
+        <!-- Phone -->
+        <div class="field" [class.has-error]="fieldError('phone')">
+          <label for="phone">Phone <span class="optional">(optional)</span></label>
+          <input id="phone" type="tel" formControlName="phone"
+                 placeholder="+1 555 000 0000" autocomplete="tel" />
+          <span class="error-msg" *ngIf="fieldError('phone')">
+            {{ fieldError('phone') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Subject -->
+      <div class="field" [class.has-error]="fieldError('subject')">
+        <label for="subject">Subject <span class="req">*</span></label>
+        <input id="subject" type="text" formControlName="subject"
+               placeholder="How can we help?" />
+        <span class="error-msg" *ngIf="fieldError('subject')">
+          {{ fieldError('subject') }}
+        </span>
+      </div>
+
+      <!-- Message -->
+      <div class="field" [class.has-error]="fieldError('message')">
+        <label for="message">Message <span class="req">*</span></label>
+        <textarea id="message" formControlName="message" rows="5"
+                  placeholder="Write your message here (min 10 characters)…"></textarea>
+        <div class="char-count">
+          {{ form.get('message')?.value?.length ?? 0 }} / 2000
+        </div>
+        <span class="error-msg" *ngIf="fieldError('message')">
+          {{ fieldError('message') }}
+        </span>
+      </div>
+
+      <button type="submit" class="btn btn-primary"
+              [disabled]="state() === 'submitting'">
+        <span *ngIf="state() === 'submitting'" class="spinner"></span>
+        {{ state() === 'submitting' ? 'Sending…' : 'Send Message' }}
+      </button>
+    </form>
+
+  </div>
+</div>
