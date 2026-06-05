@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using ContactFormApi.Models;
 using ContactFormApi.Data;
+using ContactFormApi.Services;
 
 namespace ContactFormApi.Controllers;
 
@@ -13,23 +14,28 @@ public class ContactController : ControllerBase
     private readonly ILogger<ContactController> _logger;
     private readonly IValidator<ContactFormModel> _validator;
     private readonly AppDbContext _db;
+    private readonly BlobService _blob;
 
     public ContactController(
         ILogger<ContactController> logger,
         IValidator<ContactFormModel> validator,
-        AppDbContext db)
+        AppDbContext db,
+        BlobService blob)
     {
         _logger    = logger;
         _validator = validator;
         _db        = db;
+        _blob      = blob;
     }
 
-    /// <summary>Submit the contact form — saves to database.</summary>
+    /// <summary>Submit the contact form with optional file attachment.</summary>
     [HttpPost("submit")]
+    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB max request
     [ProducesResponseType(typeof(ContactFormResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Submit([FromBody] ContactFormModel form)
+    public async Task<IActionResult> Submit([FromForm] ContactFormModel form)
     {
+        // Validate form fields
         var result = await _validator.ValidateAsync(form);
         if (!result.IsValid)
         {
@@ -39,24 +45,44 @@ public class ContactController : ControllerBase
             return ValidationProblem(new ValidationProblemDetails(errors));
         }
 
+        // Upload file to Blob Storage if provided
+        string? attachmentUrl  = null;
+        string? attachmentName = null;
+
+        if (form.Attachment != null && form.Attachment.Length > 0)
+        {
+            try
+            {
+                attachmentUrl  = await _blob.UploadAsync(form.Attachment);
+                attachmentName = form.Attachment.FileName;
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // Save to database
         var submission = new ContactSubmission
         {
-            FirstName   = form.FirstName,
-            LastName    = form.LastName,
-            Email       = form.Email,
-            Phone       = form.Phone,
-            Subject     = form.Subject,
-            Message     = form.Message,
-            ReferenceId = Guid.NewGuid(),
-            SubmittedAt = DateTime.UtcNow
+            FirstName      = form.FirstName,
+            LastName       = form.LastName,
+            Email          = form.Email,
+            Phone          = form.Phone,
+            Subject        = form.Subject,
+            Message        = form.Message,
+            ReferenceId    = Guid.NewGuid(),
+            SubmittedAt    = DateTime.UtcNow,
+            AttachmentUrl  = attachmentUrl,
+            AttachmentName = attachmentName
         };
 
         _db.ContactSubmissions.Add(submission);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Saved submission Ref:{ReferenceId} From:{Email}",
-            submission.ReferenceId, submission.Email);
+            "Saved submission Ref:{ReferenceId} From:{Email} Attachment:{HasFile}",
+            submission.ReferenceId, submission.Email, attachmentUrl != null);
 
         return Ok(new ContactFormResponse
         {

@@ -16,12 +16,17 @@ type FormState = 'idle' | 'submitting' | 'success' | 'error';
 })
 export class ContactFormComponent implements OnInit {
   form: FormGroup;
-  state         = signal<FormState>('idle');
-  serverMessage = signal<string>('');
-  referenceId   = signal<string>('');
-  serverErrors  = signal<Record<string, string[]>>({});
-  submissions   = signal<ContactSubmission[]>([]);
-  loadingList   = signal<boolean>(false);
+  state          = signal<FormState>('idle');
+  serverMessage  = signal<string>('');
+  referenceId    = signal<string>('');
+  serverErrors   = signal<Record<string, string[]>>({});
+  submissions    = signal<ContactSubmission[]>([]);
+  loadingList    = signal<boolean>(false);
+  selectedFile   = signal<File | null>(null);
+  fileError      = signal<string>('');
+
+  readonly allowedTypes = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.txt';
+  readonly maxSizeMB    = 5;
 
   constructor(private fb: FormBuilder, private contactService: ContactService) {
     this.form = this.fb.group({
@@ -34,15 +39,13 @@ export class ContactFormComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadSubmissions();
-  }
+  ngOnInit(): void { this.loadSubmissions(); }
 
   loadSubmissions(): void {
     this.loadingList.set(true);
     this.contactService.getAll().subscribe({
       next: (data) => { this.submissions.set(data); this.loadingList.set(false); },
-      error: ()     => { this.loadingList.set(false); }
+      error: ()    => { this.loadingList.set(false); }
     });
   }
 
@@ -60,6 +63,35 @@ export class ContactFormComponent implements OnInit {
     return srv ? srv[0] : null;
   }
 
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file  = input.files?.[0] ?? null;
+    this.fileError.set('');
+
+    if (!file) { this.selectedFile.set(null); return; }
+
+    // Validate size (5 MB)
+    if (file.size > this.maxSizeMB * 1024 * 1024) {
+      this.fileError.set(`File must be under ${this.maxSizeMB} MB.`);
+      this.selectedFile.set(null);
+      input.value = '';
+      return;
+    }
+
+    this.selectedFile.set(file);
+  }
+
+  removeFile(): void {
+    this.selectedFile.set(null);
+    this.fileError.set('');
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes < 1024)        return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
   onSubmit(): void {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
@@ -67,12 +99,13 @@ export class ContactFormComponent implements OnInit {
     this.state.set('submitting');
     this.serverErrors.set({});
 
-    this.contactService.submit(this.form.value).subscribe({
+    this.contactService.submit(this.form.value, this.selectedFile()).subscribe({
       next: (res: ContactFormResponse) => {
         this.state.set('success');
         this.serverMessage.set(res.message);
         this.referenceId.set(res.referenceId);
         this.form.reset();
+        this.selectedFile.set(null);
         this.loadSubmissions();
       },
       error: (err: HttpErrorResponse) => {
@@ -81,7 +114,7 @@ export class ContactFormComponent implements OnInit {
           this.state.set('idle');
         } else {
           this.state.set('error');
-          this.serverMessage.set('An unexpected error occurred. Please try again later.');
+          this.serverMessage.set(err.error?.error ?? 'An unexpected error occurred. Please try again later.');
         }
       }
     });
@@ -92,6 +125,8 @@ export class ContactFormComponent implements OnInit {
     this.serverMessage.set('');
     this.referenceId.set('');
     this.serverErrors.set({});
+    this.selectedFile.set(null);
+    this.fileError.set('');
     this.form.reset();
   }
 }

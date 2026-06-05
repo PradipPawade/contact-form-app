@@ -286,8 +286,66 @@ tbody tr:last-child td { border-bottom: none; }
 .td-name    { white-space: nowrap; font-weight: 500; color: #111827; }
 .td-email   { color: #667eea; }
 .td-subject { font-weight: 500; }
-.td-message { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.td-date    { white-space: nowrap; font-size: 0.8rem; color: #9ca3af; }
+.td-message    { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-date       { white-space: nowrap; font-size: 0.8rem; color: #9ca3af; }
+.td-attachment { max-width: 140px; }
+
+.attachment-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 130px;
+}
+.attachment-link:hover { text-decoration: underline; }
+.no-attachment { color: #d1d5db; }
+
+/* ── File Upload Drop Zone ───────────────────────────────────────────────── */
+.file-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: #f9fafb;
+  text-align: center;
+}
+
+.file-drop:hover { border-color: #667eea; background: #f0f0ff; }
+
+.file-drop.has-file {
+  border-color: #667eea;
+  background: #f0f0ff;
+}
+
+.upload-icon  { font-size: 1.8rem; }
+.upload-text  { font-weight: 600; color: #374151; font-size: 0.9rem; }
+.upload-hint  { font-size: 0.75rem; color: #9ca3af; }
+
+.file-icon    { font-size: 1.8rem; }
+.file-name    { font-weight: 600; color: #374151; font-size: 0.85rem; word-break: break-all; }
+.file-size    { font-size: 0.75rem; color: #667eea; }
+
+.btn-remove-file {
+  margin-top: 0.4rem;
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.btn-remove-file:hover { background: #fee2e2; }
 
 /* Dark spinner variant */
 .spinner.dark {

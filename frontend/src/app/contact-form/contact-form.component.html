@@ -3,14 +3,13 @@
   <!-- ── Contact Form Card ── -->
   <div class="card">
 
-    <!-- Header -->
     <div class="card-header">
       <div class="logo-ring">✉</div>
       <h1>Contact Us</h1>
       <p>Fill in the form below and we'll get back to you within 24 hours.</p>
     </div>
 
-    <!-- Success State -->
+    <!-- Success -->
     <div *ngIf="state() === 'success'" class="feedback success">
       <span class="icon">✔</span>
       <h2>Message Sent!</h2>
@@ -19,7 +18,7 @@
       <button class="btn btn-secondary" (click)="reset()">Send Another</button>
     </div>
 
-    <!-- Error State -->
+    <!-- Error -->
     <div *ngIf="state() === 'error'" class="feedback error">
       <span class="icon">✖</span>
       <h2>Something Went Wrong</h2>
@@ -75,32 +74,61 @@
         <span class="error-msg" *ngIf="fieldError('message')">{{ fieldError('message') }}</span>
       </div>
 
+      <!-- ── File Upload ── -->
+      <div class="field">
+        <label>Attachment <span class="optional">(optional — PDF, DOC, JPG, PNG, max 5 MB)</span></label>
+
+        <!-- Drop zone -->
+        <label class="file-drop" [class.has-file]="selectedFile()">
+          <input type="file"
+                 [accept]="allowedTypes"
+                 (change)="onFileSelected($event)"
+                 style="display:none" />
+
+          <ng-container *ngIf="!selectedFile()">
+            <span class="upload-icon">📎</span>
+            <span class="upload-text">Click to choose a file</span>
+            <span class="upload-hint">PDF, DOC, JPG, PNG up to 5 MB</span>
+          </ng-container>
+
+          <ng-container *ngIf="selectedFile()">
+            <span class="file-icon">📄</span>
+            <span class="file-name">{{ selectedFile()!.name }}</span>
+            <span class="file-size">{{ formatBytes(selectedFile()!.size) }}</span>
+          </ng-container>
+        </label>
+
+        <!-- Remove button -->
+        <button *ngIf="selectedFile()" type="button"
+                class="btn-remove-file" (click)="removeFile()">
+          ✕ Remove file
+        </button>
+
+        <span class="error-msg" *ngIf="fileError()">{{ fileError() }}</span>
+      </div>
+
       <button type="submit" class="btn btn-primary" [disabled]="state() === 'submitting'">
         <span *ngIf="state() === 'submitting'" class="spinner"></span>
         {{ state() === 'submitting' ? 'Sending…' : 'Send Message' }}
       </button>
     </form>
-
   </div>
 
   <!-- ── Submissions List ── -->
   <div class="submissions-card">
     <div class="submissions-header">
       <h2>📋 All Submissions</h2>
-      <button class="btn-refresh" (click)="loadSubmissions()" title="Refresh">↻ Refresh</button>
+      <button class="btn-refresh" (click)="loadSubmissions()">↻ Refresh</button>
     </div>
 
-    <!-- Loading -->
     <div *ngIf="loadingList()" class="list-state">
       <span class="spinner dark"></span> Loading submissions…
     </div>
 
-    <!-- Empty -->
     <div *ngIf="!loadingList() && submissions().length === 0" class="list-state empty">
       No submissions yet. Be the first to send a message!
     </div>
 
-    <!-- Table -->
     <div *ngIf="!loadingList() && submissions().length > 0" class="table-wrapper">
       <table>
         <thead>
@@ -110,6 +138,7 @@
             <th>Email</th>
             <th>Subject</th>
             <th>Message</th>
+            <th>Attachment</th>
             <th>Date</th>
           </tr>
         </thead>
@@ -120,6 +149,16 @@
             <td class="td-email">{{ s.email }}</td>
             <td class="td-subject">{{ s.subject }}</td>
             <td class="td-message">{{ s.message }}</td>
+            <td class="td-attachment">
+              <a *ngIf="s.attachmentUrl"
+                 [href]="s.attachmentUrl"
+                 target="_blank"
+                 class="attachment-link"
+                 [title]="s.attachmentName ?? 'Download'">
+                📎 {{ s.attachmentName ?? 'File' }}
+              </a>
+              <span *ngIf="!s.attachmentUrl" class="no-attachment">—</span>
+            </td>
             <td class="td-date">{{ s.submittedAt | date:'dd MMM yyyy, HH:mm' }}</td>
           </tr>
         </tbody>

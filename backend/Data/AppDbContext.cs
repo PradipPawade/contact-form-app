@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.Phone).HasMaxLength(20);
             e.Property(x => x.Subject).HasMaxLength(100).IsRequired();
             e.Property(x => x.Message).HasMaxLength(2000).IsRequired();
+            e.Property(x => x.AttachmentUrl).HasMaxLength(500);
+            e.Property(x => x.AttachmentName).HasMaxLength(255);
         });
     }
 }

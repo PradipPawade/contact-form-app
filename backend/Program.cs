@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ContactFormApi.Models;
 using ContactFormApi.Validators;
 using ContactFormApi.Data;
+using ContactFormApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddScoped<IValidator<ContactFormModel>, ContactFormValidator>();
+
+// ── Blob Storage ──────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<BlobService>();
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>

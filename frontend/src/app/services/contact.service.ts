@@ -10,8 +10,21 @@ export class ContactService {
 
   constructor(private http: HttpClient) {}
 
-  submit(form: ContactFormModel): Observable<ContactFormResponse> {
-    return this.http.post<ContactFormResponse>(`${this.base}/submit`, form);
+  submit(form: ContactFormModel, attachment?: File | null): Observable<ContactFormResponse> {
+    // Use FormData to support file upload
+    const fd = new FormData();
+    fd.append('firstName', form.firstName);
+    fd.append('lastName',  form.lastName);
+    fd.append('email',     form.email);
+    fd.append('phone',     form.phone     ?? '');
+    fd.append('subject',   form.subject);
+    fd.append('message',   form.message);
+
+    if (attachment) {
+      fd.append('attachment', attachment, attachment.name);
+    }
+
+    return this.http.post<ContactFormResponse>(`${this.base}/submit`, fd);
   }
 
   getAll(): Observable<ContactSubmission[]> {

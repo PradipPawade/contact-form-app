@@ -15,13 +15,15 @@ export interface ContactFormResponse {
 }
 
 export interface ContactSubmission {
-  id:          number;
-  firstName:   string;
-  lastName:    string;
-  email:       string;
-  phone:       string;
-  subject:     string;
-  message:     string;
-  referenceId: string;
-  submittedAt: string;
+  id:             number;
+  firstName:      string;
+  lastName:       string;
+  email:          string;
+  phone:          string;
+  subject:        string;
+  message:        string;
+  referenceId:    string;
+  submittedAt:    string;
+  attachmentUrl:  string | null;
+  attachmentName: string | null;
 }
