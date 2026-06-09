@@ -143,12 +143,15 @@ jobs:
           name: functionapp-publish
           path: ./publish
 
+      - name: Zip publish output
+        run: cd ./publish && zip -r ../functionapp.zip .
+
       - name: Deploy to Azure Function App
         uses: azure/webapps-deploy@v3
         with:
           app-name:        ${{ env.FUNC_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_FUNC_PUBLISH_PROFILE }}
-          package:         ./publish
+          package:         ./functionapp.zip
 
   # ── 6. Deploy frontend to Azure App Service ───────────────────────────────
   deploy-frontend:
