@@ -19,7 +19,9 @@ builder.Services.AddScoped<IValidator<ContactFormModel>, ContactFormValidator>()
 
 // ── Blob Storage ──────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<BlobService>();
-// Note: AzureStorage__ConnectionString env var in Azure maps to AzureStorage:ConnectionString in config
+
+// ── Service Bus ───────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<ServiceBusPublisher>();
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>

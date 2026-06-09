@@ -9,6 +9,7 @@ on:
 env:
   DOTNET_VERSION: '8.0.x'
   NODE_VERSION:   '20.x'
+  FUNC_APP_NAME:  'contactformfunc-pradip'
 
 jobs:
 
@@ -44,7 +45,39 @@ jobs:
           path: backend/publish
           retention-days: 1
 
-  # ── 2. Frontend: build ───────────────────────────────────────────────────
+  # ── 2. Function App: build + publish ────────────────────────────────────
+  build-functions:
+    name: Function App — Build & Publish
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functionapp
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish
+
+      - name: Upload function app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: functionapp-publish
+          path: functionapp/publish
+          retention-days: 1
+
+  # ── 3. Frontend: build ───────────────────────────────────────────────────
   build-frontend:
     name: Frontend — Build
     runs-on: ubuntu-latest
@@ -75,7 +108,7 @@ jobs:
           path: frontend/dist/contact-form-frontend/browser
           retention-days: 1
 
-  # ── 3. Deploy backend to Azure App Service ───────────────────────────────
+  # ── 4. Deploy backend to Azure App Service ───────────────────────────────
   deploy-backend:
     name: Deploy Backend → Azure
     runs-on: ubuntu-latest
@@ -96,7 +129,28 @@ jobs:
           publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
           package:         ./publish
 
-  # ── 4. Deploy frontend to Azure App Service ───────────────────────────────
+  # ── 5. Deploy Function App to Azure ─────────────────────────────────────
+  deploy-functions:
+    name: Deploy Function App → Azure
+    runs-on: ubuntu-latest
+    needs: build-functions
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Download function app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: functionapp-publish
+          path: ./publish
+
+      - name: Deploy to Azure Function App
+        uses: azure/functions-action@v1
+        with:
+          app-name:        ${{ env.FUNC_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_FUNC_PUBLISH_PROFILE }}
+          package:         ./publish
+
+  # ── 6. Deploy frontend to Azure App Service ───────────────────────────────
   deploy-frontend:
     name: Deploy Frontend → Azure
     runs-on: ubuntu-latest

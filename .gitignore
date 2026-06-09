@@ -14,3 +14,8 @@ frontend/frontend.zip
 # General
 .DS_Store
 *.log
+
+# Azure Functions local settings (contains secrets)
+functionapp/local.settings.json
+functionapp/bin/
+functionapp/obj/

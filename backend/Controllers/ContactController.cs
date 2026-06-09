@@ -15,17 +15,20 @@ public class ContactController : ControllerBase
     private readonly IValidator<ContactFormModel> _validator;
     private readonly AppDbContext _db;
     private readonly BlobService _blob;
+    private readonly ServiceBusPublisher _bus;
 
     public ContactController(
         ILogger<ContactController> logger,
         IValidator<ContactFormModel> validator,
         AppDbContext db,
-        BlobService blob)
+        BlobService blob,
+        ServiceBusPublisher bus)
     {
         _logger    = logger;
         _validator = validator;
         _db        = db;
         _blob      = blob;
+        _bus       = bus;
     }
 
     /// <summary>Submit the contact form with optional file attachment.</summary>
@@ -83,6 +86,9 @@ public class ContactController : ControllerBase
         _logger.LogInformation(
             "Saved submission Ref:{ReferenceId} From:{Email} Attachment:{HasFile}",
             submission.ReferenceId, submission.Email, attachmentUrl != null);
+
+        // Publish to Service Bus for async processing (email notifications etc.)
+        await _bus.PublishSubmissionAsync(submission);
 
         return Ok(new ContactFormResponse
         {
