@@ -17,22 +17,14 @@ public class BlobService
     public BlobService(IConfiguration config, ILogger<BlobService> logger)
     {
         _logger = logger;
-        var connStr = config["AzureStorage:ConnectionString"];
+        // Azure App Service maps AzureStorage__ConnectionString → AzureStorage:ConnectionString automatically,
+        // but fall back to the double-underscore key in case it doesn't.
+        var connStr = config["AzureStorage:ConnectionString"]
+                   ?? config["AzureStorage__ConnectionString"];
 
         if (string.IsNullOrWhiteSpace(connStr))
         {
-            _logger.LogWarning("AzureStorage:ConnectionString is not configured. File uploads are disabled.");
-            _isConfigured = false;
-            return;
-        }
-
-        // Also check double-underscore format used by Azure App Service
-        if (string.IsNullOrWhiteSpace(connStr))
-            connStr = config["AzureStorage__ConnectionString"];
-
-        if (string.IsNullOrWhiteSpace(connStr))
-        {
-            _logger.LogWarning("AzureStorage connection string not found. File uploads disabled.");
+            _logger.LogWarning("AzureStorage connection string not configured. File uploads are disabled.");
             _isConfigured = false;
             return;
         }
