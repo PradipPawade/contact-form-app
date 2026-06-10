@@ -71,13 +71,10 @@ jobs:
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
-      - name: Override generated functions.metadata with static version
-        run: cp functions.metadata ./publish/functions.metadata
-
-      - name: Patch runtimeconfig and worker.config for Azure dotnet rollforward
+      - name: Patch all config files for Azure deployment
         run: |
           python3 -c "
-          import json
+          import json, os
 
           # Patch runtimeconfig.json to allow rolling forward to dotnet 10
           with open('./publish/ContactFormFunctions.runtimeconfig.json', 'r') as f:
@@ -87,7 +84,7 @@ jobs:
               json.dump(rc, f, indent=2)
           print('runtimeconfig.json patched')
 
-          # Restore worker.config.json to defaults
+          # Patch worker.config.json
           with open('./publish/worker.config.json', 'r') as f:
               config = json.load(f)
           config['description']['defaultExecutablePath'] = 'dotnet'
@@ -95,6 +92,36 @@ jobs:
           with open('./publish/worker.config.json', 'w') as f:
               json.dump(config, f, indent=2)
           print('worker.config.json patched')
+
+          # Write functions.metadata (override broken source generator output)
+          metadata = [
+            {
+              'name': 'ContactSubmissionProcessor',
+              'scriptFile': 'ContactFormFunctions.dll',
+              'entryPoint': 'ContactFormFunctions.Functions.ContactSubmissionProcessor.Run',
+              'language': 'dotnet-isolated',
+              'properties': {'IsCodeless': False},
+              'bindings': [
+                {
+                  'name': 'messageBody',
+                  'direction': 'In',
+                  'type': 'serviceBusTrigger',
+                  'dataType': 'String',
+                  'queueName': 'contact-submissions',
+                  'connection': 'ServiceBusConnection',
+                  'properties': {}
+                }
+              ]
+            }
+          ]
+          with open('./publish/functions.metadata', 'w', encoding='utf-8') as f:
+              json.dump(metadata, f, indent=2)
+          print('functions.metadata written')
+
+          # Verify all files exist
+          for fname in ['ContactFormFunctions.runtimeconfig.json', 'worker.config.json', 'functions.metadata', 'host.json']:
+              exists = os.path.exists(f'./publish/{fname}')
+              print(f'{fname}: {\"OK\" if exists else \"MISSING\"}'  )
           "
 
       - name: Upload function app artifact
