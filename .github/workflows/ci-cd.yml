@@ -88,7 +88,7 @@ jobs:
           with open('./publish/worker.config.json', 'r') as f:
               config = json.load(f)
           config['description']['defaultExecutablePath'] = 'dotnet'
-          config['description']['workerIndexing'] = 'true'
+          config['description']['workerIndexing'] = 'false'
           with open('./publish/worker.config.json', 'w') as f:
               json.dump(config, f, indent=2)
           print('worker.config.json patched')
