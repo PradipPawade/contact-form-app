@@ -71,6 +71,19 @@ jobs:
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
+      - name: Patch worker.config.json for Azure x86 runtime
+        run: |
+          python3 -c "
+          import json
+          with open('./publish/worker.config.json', 'r') as f:
+              config = json.load(f)
+          config['description']['defaultExecutablePath'] = 'C:\\\\Program Files (x86)\\\\dotnet\\\\dotnet.exe'
+          config['description']['workerIndexing'] = 'false'
+          with open('./publish/worker.config.json', 'w') as f:
+              json.dump(config, f, indent=2)
+          print('worker.config.json patched successfully')
+          "
+
       - name: Upload function app artifact
         uses: actions/upload-artifact@v4
         with:
