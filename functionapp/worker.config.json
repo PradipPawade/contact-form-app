@@ -1,0 +1,10 @@
+{
+  "description": {
+    "language": "dotnet-isolated",
+    "extensions": [ ".dll" ],
+    "defaultExecutablePath": "C:\\Program Files (x86)\\dotnet\\dotnet.exe",
+    "defaultWorkerPath": "ContactFormFunctions.dll",
+    "workerIndexing": "false",
+    "canUsePlaceholder": true
+  }
+}
