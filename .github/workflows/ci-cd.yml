@@ -7,9 +7,10 @@ on:
     branches: [main]
 
 env:
-  DOTNET_VERSION: '8.0.x'
-  NODE_VERSION:   '20.x'
-  FUNC_APP_NAME:  'contactformfunc-pradip'
+  DOTNET_VERSION:      '8.0.x'
+  DOTNET_FUNC_VERSION: '9.0.x'
+  NODE_VERSION:        '20.x'
+  FUNC_APP_NAME:       'contactformfunc-pradip'
 
 jobs:
 
@@ -56,10 +57,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      - name: Setup .NET ${{ env.DOTNET_FUNC_VERSION }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: ${{ env.DOTNET_FUNC_VERSION }}
 
       - name: Restore dependencies
         run: dotnet restore
@@ -68,7 +69,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Publish
-        run: dotnet publish --configuration Release --runtime win-x64 --self-contained true --output ./publish
+        run: dotnet publish --configuration Release --output ./publish
 
       - name: Upload function app artifact
         uses: actions/upload-artifact@v4
