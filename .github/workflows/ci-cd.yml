@@ -71,6 +71,9 @@ jobs:
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
+      - name: Override generated functions.metadata with static version
+        run: cp functions.metadata ./publish/functions.metadata
+
       - name: Patch runtimeconfig and worker.config for Azure dotnet rollforward
         run: |
           python3 -c "
