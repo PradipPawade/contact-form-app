@@ -140,8 +140,9 @@ jobs:
 
           # Verify all files exist
           for fname in ['ContactFormFunctions.runtimeconfig.json', 'worker.config.json', 'functions.metadata', 'host.json']:
-              exists = os.path.exists(f'./publish/{fname}')
-              print(f'{fname}: {\"OK\" if exists else \"MISSING\"}'  )
+              exists = os.path.exists('./publish/' + fname)
+              status = 'OK' if exists else 'MISSING'
+              print(fname + ': ' + status)
           "
 
       - name: Upload function app artifact
