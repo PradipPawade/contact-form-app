@@ -93,6 +93,26 @@ jobs:
               json.dump(config, f, indent=2)
           print('worker.config.json patched')
 
+          # Write host.json with extensionBundle (ensures it's in publish output)
+          host_config = {
+            'version': '2.0',
+            'extensionBundle': {
+              'id': 'Microsoft.Azure.Functions.ExtensionBundle',
+              'version': '[4.*, 5.0.0)'
+            },
+            'logging': {
+              'applicationInsights': {
+                'samplingSettings': {
+                  'isEnabled': True,
+                  'excludedTypes': 'Request'
+                }
+              }
+            }
+          }
+          with open('./publish/host.json', 'w', encoding='utf-8') as f:
+              json.dump(host_config, f, indent=2)
+          print('host.json written')
+
           # Write functions.metadata (override broken source generator output)
           metadata = [
             {
