@@ -71,17 +71,27 @@ jobs:
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
-      - name: Patch worker.config.json for Azure x86 runtime
+      - name: Patch runtimeconfig and worker.config for Azure dotnet rollforward
         run: |
           python3 -c "
           import json
+
+          # Patch runtimeconfig.json to allow rolling forward to dotnet 10
+          with open('./publish/ContactFormFunctions.runtimeconfig.json', 'r') as f:
+              rc = json.load(f)
+          rc['runtimeOptions']['rollForward'] = 'LatestMajor'
+          with open('./publish/ContactFormFunctions.runtimeconfig.json', 'w') as f:
+              json.dump(rc, f, indent=2)
+          print('runtimeconfig.json patched')
+
+          # Restore worker.config.json to defaults
           with open('./publish/worker.config.json', 'r') as f:
               config = json.load(f)
-          config['description']['defaultExecutablePath'] = 'C:\\\\Program Files (x86)\\\\dotnet\\\\dotnet.exe'
-          config['description']['workerIndexing'] = 'false'
+          config['description']['defaultExecutablePath'] = 'dotnet'
+          config['description']['workerIndexing'] = 'true'
           with open('./publish/worker.config.json', 'w') as f:
               json.dump(config, f, indent=2)
-          print('worker.config.json patched successfully')
+          print('worker.config.json patched')
           "
 
       - name: Upload function app artifact
