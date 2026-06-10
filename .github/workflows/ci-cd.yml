@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION:      '8.0.x'
-  DOTNET_FUNC_VERSION: '9.0.x'
+  DOTNET_FUNC_VERSION: '8.0.x'
   NODE_VERSION:        '20.x'
   FUNC_APP_NAME:       'contactformfunc-pradip'
 
