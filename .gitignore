@@ -19,3 +19,4 @@ frontend/frontend.zip
 functionapp/local.settings.json
 functionapp/bin/
 functionapp/obj/
+functionapp/publish/
