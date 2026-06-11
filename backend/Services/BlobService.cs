@@ -1,10 +1,14 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 
 namespace ContactFormApi.Services;
 
+public record SasUploadResult(string UploadUrl, string BlobUrl);
+
 public class BlobService
 {
+    private readonly BlobServiceClient? _serviceClient;
     private readonly BlobContainerClient? _container;
     private readonly ILogger<BlobService> _logger;
     private readonly bool _isConfigured;
@@ -31,8 +35,8 @@ public class BlobService
 
         try
         {
-            var serviceClient = new BlobServiceClient(connStr);
-            _container = serviceClient.GetBlobContainerClient("attachments");
+            _serviceClient = new BlobServiceClient(connStr);
+            _container = _serviceClient.GetBlobContainerClient("attachments");
             _container.CreateIfNotExists(PublicAccessType.Blob);
             _isConfigured = true;
             _logger.LogInformation("Blob Storage configured successfully.");
@@ -72,6 +76,37 @@ public class BlobService
 
         _logger.LogInformation("Uploaded blob: {BlobName}", uniqueName);
         return blobClient.Uri.ToString();
+    }
+
+    public SasUploadResult? GenerateSasUploadUrl(string originalFilename)
+    {
+        if (!_isConfigured || _container is null)
+        {
+            _logger.LogWarning("Blob Storage not configured — cannot generate SAS URL.");
+            return null;
+        }
+
+        var ext = Path.GetExtension(originalFilename).ToLowerInvariant();
+        if (!AllowedExtensions.Contains(ext))
+            throw new InvalidOperationException($"File type '{ext}' is not allowed.");
+
+        var blobName = $"{Guid.NewGuid()}{ext}";
+        var blobClient = _container.GetBlobClient(blobName);
+
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = _container.Name,
+            BlobName          = blobName,
+            Resource          = "b",
+            ExpiresOn         = DateTimeOffset.UtcNow.AddMinutes(5)
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Write | BlobSasPermissions.Create);
+
+        var uploadUrl = blobClient.GenerateSasUri(sasBuilder).ToString();
+        var blobUrl   = blobClient.Uri.ToString();
+
+        _logger.LogInformation("Generated SAS upload URL for blob: {BlobName}", blobName);
+        return new SasUploadResult(uploadUrl, blobUrl);
     }
 
     public async Task DeleteAsync(string fileUrl)

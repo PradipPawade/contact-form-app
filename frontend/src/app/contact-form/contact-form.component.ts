@@ -99,7 +99,43 @@ export class ContactFormComponent implements OnInit {
     this.state.set('submitting');
     this.serverErrors.set({});
 
-    this.contactService.submit(this.form.value, this.selectedFile()).subscribe({
+    const file = this.selectedFile();
+
+    if (file) {
+      // Step 1: Get SAS URL
+      this.contactService.getUploadUrl(file.name).subscribe({
+        next: ({ uploadUrl, blobUrl }) => {
+          // Step 2: Upload directly to blob storage
+          this.contactService.uploadToBlobStorage(uploadUrl, file).subscribe({
+            next: () => {
+              // Step 3: Submit form with blob URL
+              this.submitForm(blobUrl, file.name);
+            },
+            error: () => {
+              this.state.set('error');
+              this.serverMessage.set('File upload failed. Please try again.');
+            }
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          this.state.set('error');
+          this.serverMessage.set(err.error?.error ?? 'Could not get upload URL. Please try again.');
+        }
+      });
+    } else {
+      // No file — submit directly
+      this.submitForm(null, null);
+    }
+  }
+
+  private submitForm(attachmentUrl: string | null, attachmentName: string | null): void {
+    const payload = {
+      ...this.form.value,
+      attachmentUrl:  attachmentUrl  ?? null,
+      attachmentName: attachmentName ?? null
+    };
+
+    this.contactService.submit(payload).subscribe({
       next: (res: ContactFormResponse) => {
         this.state.set('success');
         this.serverMessage.set(res.message);

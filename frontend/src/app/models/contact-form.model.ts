@@ -1,10 +1,17 @@
 export interface ContactFormModel {
-  firstName: string;
-  lastName:  string;
-  email:     string;
-  phone:     string;
-  subject:   string;
-  message:   string;
+  firstName:      string;
+  lastName:       string;
+  email:          string;
+  phone:          string;
+  subject:        string;
+  message:        string;
+  attachmentUrl?:  string | null;
+  attachmentName?: string | null;
+}
+
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  blobUrl:   string;
 }
 
 export interface ContactFormResponse {

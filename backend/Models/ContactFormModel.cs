@@ -7,8 +7,9 @@ public class ContactFormModel
     public string Email     { get; set; } = string.Empty;
     public string Phone     { get; set; } = string.Empty;
     public string Subject   { get; set; } = string.Empty;
-    public string    Message    { get; set; } = string.Empty;
-    public IFormFile? Attachment { get; set; }  // optional file upload
+    public string Message        { get; set; } = string.Empty;
+    public string? AttachmentUrl  { get; set; }  // blob URL after direct upload
+    public string? AttachmentName { get; set; }  // original filename
 }
 
 public class ContactFormResponse

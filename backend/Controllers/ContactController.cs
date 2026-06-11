@@ -31,12 +31,34 @@ public class ContactController : ControllerBase
         _bus       = bus;
     }
 
-    /// <summary>Submit the contact form with optional file attachment.</summary>
+    /// <summary>Get a short-lived SAS URL for direct browser-to-blob upload.</summary>
+    [HttpGet("upload-url")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult GetUploadUrl([FromQuery] string filename)
+    {
+        if (string.IsNullOrWhiteSpace(filename))
+            return BadRequest(new { error = "filename is required." });
+
+        try
+        {
+            var result = _blob.GenerateSasUploadUrl(filename);
+            if (result is null)
+                return StatusCode(503, new { error = "Blob Storage is not configured." });
+
+            return Ok(new { uploadUrl = result.UploadUrl, blobUrl = result.BlobUrl });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>Submit the contact form. File should be uploaded directly to blob first via /upload-url.</summary>
     [HttpPost("submit")]
-    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB max request
     [ProducesResponseType(typeof(ContactFormResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Submit([FromForm] ContactFormModel form)
+    public async Task<IActionResult> Submit([FromBody] ContactFormModel form)
     {
         // Validate form fields
         var result = await _validator.ValidateAsync(form);
@@ -46,23 +68,6 @@ public class ContactController : ControllerBase
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
             return ValidationProblem(new ValidationProblemDetails(errors));
-        }
-
-        // Upload file to Blob Storage if provided
-        string? attachmentUrl  = null;
-        string? attachmentName = null;
-
-        if (form.Attachment != null && form.Attachment.Length > 0)
-        {
-            try
-            {
-                attachmentUrl  = await _blob.UploadAsync(form.Attachment);
-                attachmentName = form.Attachment.FileName;
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
         }
 
         // Save to database
@@ -76,8 +81,8 @@ public class ContactController : ControllerBase
             Message        = form.Message,
             ReferenceId    = Guid.NewGuid(),
             SubmittedAt    = DateTime.UtcNow,
-            AttachmentUrl  = attachmentUrl,
-            AttachmentName = attachmentName
+            AttachmentUrl  = form.AttachmentUrl,
+            AttachmentName = form.AttachmentName
         };
 
         _db.ContactSubmissions.Add(submission);

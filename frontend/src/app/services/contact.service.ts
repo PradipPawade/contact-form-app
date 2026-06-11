@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ContactFormModel, ContactFormResponse, ContactSubmission } from '../models/contact-form.model';
+import { ContactFormModel, ContactFormResponse, ContactSubmission, UploadUrlResponse } from '../models/contact-form.model';
 
 @Injectable({ providedIn: 'root' })
 export class ContactService {
@@ -10,21 +10,22 @@ export class ContactService {
 
   constructor(private http: HttpClient) {}
 
-  submit(form: ContactFormModel, attachment?: File | null): Observable<ContactFormResponse> {
-    // Use FormData to support file upload
-    const fd = new FormData();
-    fd.append('firstName', form.firstName);
-    fd.append('lastName',  form.lastName);
-    fd.append('email',     form.email);
-    fd.append('phone',     form.phone     ?? '');
-    fd.append('subject',   form.subject);
-    fd.append('message',   form.message);
+  /** Step 1: Get a short-lived SAS URL for direct browser → blob upload */
+  getUploadUrl(filename: string): Observable<UploadUrlResponse> {
+    return this.http.get<UploadUrlResponse>(
+      `${this.base}/upload-url?filename=${encodeURIComponent(filename)}`
+    );
+  }
 
-    if (attachment) {
-      fd.append('attachment', attachment, attachment.name);
-    }
+  /** Step 2: Upload file directly to Azure Blob Storage using the SAS URL */
+  uploadToBlobStorage(sasUrl: string, file: File): Observable<void> {
+    const headers = new HttpHeaders({ 'x-ms-blob-type': 'BlockBlob' });
+    return this.http.put<void>(sasUrl, file, { headers });
+  }
 
-    return this.http.post<ContactFormResponse>(`${this.base}/submit`, fd);
+  /** Step 3: Submit form JSON (with blobUrl if file was uploaded) */
+  submit(form: ContactFormModel): Observable<ContactFormResponse> {
+    return this.http.post<ContactFormResponse>(`${this.base}/submit`, form);
   }
 
   getAll(): Observable<ContactSubmission[]> {
