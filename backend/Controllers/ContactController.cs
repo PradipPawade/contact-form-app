@@ -90,7 +90,7 @@ public class ContactController : ControllerBase
 
         _logger.LogInformation(
             "Saved submission Ref:{ReferenceId} From:{Email} Attachment:{HasFile}",
-            submission.ReferenceId, submission.Email, attachmentUrl != null);
+            submission.ReferenceId, submission.Email, submission.AttachmentUrl != null);
 
         // Publish to Service Bus for async processing (email notifications etc.)
         await _bus.PublishSubmissionAsync(submission);
